@@ -10,16 +10,16 @@
 
 ## 1. 技术栈与版本约定
 
-| 层 | 技术 | 包管理 |
-|---|---|---|
-| 前端 | uni-app + Vue 3 (`<script setup>`) + TypeScript | pnpm |
-| 后端 | NestJS + TypeScript | pnpm |
-| ORM | Prisma | — |
-| 数据库 | 开发 SQLite / 上线 PostgreSQL | — |
-| 校验 | class-validator + class-transformer（后端 DTO） | — |
-| 单测 | Vitest（前后端通用） | — |
-| Lint | ESLint + Prettier | — |
-| Commit | Conventional Commits | — |
+| 层     | 技术                                            | 包管理 |
+| ------ | ----------------------------------------------- | ------ |
+| 前端   | uni-app + Vue 3 (`<script setup>`) + TypeScript | pnpm   |
+| 后端   | NestJS + TypeScript                             | pnpm   |
+| ORM    | Prisma                                          | —      |
+| 数据库 | 开发 SQLite / 上线 PostgreSQL                   | —      |
+| 校验   | class-validator + class-transformer（后端 DTO） | —      |
+| 单测   | Vitest（前后端通用）                            | —      |
+| Lint   | ESLint + Prettier                               | —      |
+| Commit | Conventional Commits                            | —      |
 
 **Node 版本**：固定 LTS（写在 `.nvmrc`），前后端一致。
 **包管理器**：统一 `pnpm`，禁止混用 npm/yarn。
@@ -68,6 +68,7 @@ kitchen/
 ```
 
 **核心原则**：
+
 - `packages/shared` 是前后端的唯一类型真相源。后端 DTO、前端 api、Prisma 生成的类型，最终都收敛到可被 shared 引用。
 - 严禁在前端重新定义后端已有的业务类型（复制粘贴），必须从 shared 导入。
 
@@ -78,6 +79,7 @@ kitchen/
 ### 3.1 严格模式
 
 `tsconfig` 全开严格：
+
 ```json
 {
   "compilerOptions": {
@@ -97,7 +99,7 @@ kitchen/
 2. **禁止 `as` 断言**，除非：
    - 解析外部不可信数据（且随后校验）；
    - Prisma 类型扩展等框架要求场景。
-   断言处必须注释为什么安全。
+     断言处必须注释为什么安全。
 3. **禁用非空断言 `!`**。用可选链 `?.`、空值合并 `??`、显式判空。
 4. **优先 `interface` 描述对象形状，`type` 描述联合/工具类型**。
 5. **枚举放 shared**，前后端共用，避免魔法字符串。
@@ -105,11 +107,11 @@ kitchen/
 ```ts
 // shared/enums/order.ts
 export enum OrderStatus {
-  Pending = 'pending',
-  Processing = 'processing',
-  Done = 'done',
-  Rejected = 'rejected',
-  Cancelled = 'cancelled',
+  Pending = "pending",
+  Processing = "processing",
+  Done = "done",
+  Rejected = "rejected",
+  Cancelled = "cancelled",
 }
 ```
 
@@ -126,18 +128,19 @@ function calcConsume(qty: number, servings: number) { ... }
 
 ## 4. 命名规范
 
-| 对象 | 规则 | 示例 |
-|---|---|---|
-| 变量、函数 | camelCase | `lowStockThreshold` |
-| 类、接口、类型、枚举 | PascalCase | `OrderService`, `RecipeDto` |
-| 常量（真常量） | UPPER_SNAKE_CASE | `DEFAULT_ML_THRESHOLD` |
-| 文件（组件） | PascalCase.vue | `OrderCard.vue` |
-| 文件（其他 ts） | kebab-case | `order-status.ts` |
-| 数据库表/字段 | snake_case（Prisma 用 `@map`） | `kitchen_id` |
-| API 路径 | kebab-case 复数 | `/api/orders`, `/api/low-stock-items` |
-| 枚举值 | snake_case 字符串 | `'pending'`, `'on_sale'` |
+| 对象                 | 规则                           | 示例                                  |
+| -------------------- | ------------------------------ | ------------------------------------- |
+| 变量、函数           | camelCase                      | `lowStockThreshold`                   |
+| 类、接口、类型、枚举 | PascalCase                     | `OrderService`, `RecipeDto`           |
+| 常量（真常量）       | UPPER_SNAKE_CASE               | `DEFAULT_ML_THRESHOLD`                |
+| 文件（组件）         | PascalCase.vue                 | `OrderCard.vue`                       |
+| 文件（其他 ts）      | PascalCase                     | `OrderStatus.ts`                      |
+| 数据库表/字段        | snake_case（Prisma 用 `@map`） | `kitchen_id`                          |
+| API 路径             | kebab-case 复数                | `/api/orders`, `/api/low-stock-items` |
+| 枚举值               | snake_case 字符串              | `'pending'`, `'on_sale'`              |
 
 **语义化命名**：
+
 - 布尔变量以 `is/has/can/should` 开头：`isPublic`, `hasRecipe`, `canCancel`。
 - 异步函数以动词开头：`createOrder`, `fetchInventory`。
 - 避免缩写：`inventory` 不写 `inv`，`quantity` 不写 `qty`（除数学公式局部变量）。
@@ -202,11 +205,11 @@ src/modules/order/
 
 ### 6.2 分层职责（严格执行）
 
-| 层 | 职责 | 禁止 |
-|---|---|---|
+| 层         | 职责                                        | 禁止                      |
+| ---------- | ------------------------------------------- | ------------------------- |
 | Controller | 接收请求、调 DTO 校验、调 Service、返回结果 | 写业务逻辑、直接调 Prisma |
-| Service | 业务逻辑、事务、跨模块协作 | 关心 HTTP、返回响应对象 |
-| Prisma | 数据访问 | 出现在 Controller |
+| Service    | 业务逻辑、事务、跨模块协作                  | 关心 HTTP、返回响应对象   |
+| Prisma     | 数据访问                                    | 出现在 Controller         |
 
 **业务规则集中在 Service**。例如"订单完成扣库存"的逻辑只存在于 `OrderService.completeOrder()`，前端和其他模块调用都走它。
 
@@ -217,8 +220,8 @@ src/modules/order/
 
 ```ts
 // dto/create-order.dto.ts
-import { IsArray, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsArray, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
 class OrderItemDto {
   @IsString() dishId: string;
@@ -227,7 +230,8 @@ class OrderItemDto {
 
 export class CreateOrderDto {
   @IsString() kitchenId: string;
-  @IsArray() @ValidateNested({ each: true })
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
   @IsOptional() @IsString() remark?: string;
@@ -244,10 +248,15 @@ export class CreateOrderDto {
 ```ts
 // common/exceptions/biz.exception.ts
 export class BizException extends Error {
-  constructor(public code: string, message: string) { super(message); }
+  constructor(
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+  }
 }
 // 用法
-throw new BizException('KITCHEN.NOT_OWNER', '仅主理人可操作');
+throw new BizException("KITCHEN.NOT_OWNER", "仅主理人可操作");
 ```
 
 - 全局响应格式统一：
@@ -290,8 +299,8 @@ async assertOwner(userId: string, kitchenId: string): Promise<void> {
 
 ```vue
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { OrderStatus } from '@kitchen/shared';
+import { ref, computed } from "vue";
+import { OrderStatus } from "@kitchen/shared";
 
 const props = defineProps<{
   status: OrderStatus;
@@ -299,11 +308,11 @@ const props = defineProps<{
 
 const statusText = computed(() => {
   const map: Record<OrderStatus, string> = {
-    [OrderStatus.Pending]: '待处理',
-    [OrderStatus.Processing]: '备餐中',
-    [OrderStatus.Done]: '已完成',
-    [OrderStatus.Rejected]: '已拒绝',
-    [OrderStatus.Cancelled]: '已取消',
+    [OrderStatus.Pending]: "待处理",
+    [OrderStatus.Processing]: "备餐中",
+    [OrderStatus.Done]: "已完成",
+    [OrderStatus.Rejected]: "已拒绝",
+    [OrderStatus.Cancelled]: "已取消",
   };
   return map[props.status];
 });
@@ -343,18 +352,18 @@ export const orderApi = {
 
 设计文档 §7 的 12 条业务规则，实现时必须在代码中有明确落点：
 
-| 规则 | 落点 |
-|---|---|
-| 主理人固定一人、转移需先指派 | `MembershipService.transferOwner()` + DB 校验 |
+| 规则                                     | 落点                                           |
+| ---------------------------------------- | ---------------------------------------------- |
+| 主理人固定一人、转移需先指派             | `MembershipService.transferOwner()` + DB 校验  |
 | 自动扣减比例 `qty × orderQty ÷ servings` | `OrderService.calcConsume()`（纯函数，可单测） |
-| FIFO 扣减（按 expireDate 升序） | `InventoryService.deductFifo()` |
-| 无菜谱菜品不扣库存 | `OrderService.completeOrder()` 判空 |
-| 库存不足不阻断（扣到 0、标记缺料、通知） | `InventoryService.deductFifo()` 返回缺料列表 |
-| 低库存阈值每食材独立 | `Ingredient.lowStockThreshold` 字段 + 查询 |
-| 菜谱公开开关 | 查询菜谱时 `where isPublic` |
-| 订单可拒、撤单状态流转 | `OrderService` 状态机校验函数 |
-| 订单明细快照 | 创建订单时写入 `OrderItem.dishSnapshot` |
-| 单位一致性提示 | 菜谱用料录入时前端校验 + 后端校验 |
+| FIFO 扣减（按 expireDate 升序）          | `InventoryService.deductFifo()`                |
+| 无菜谱菜品不扣库存                       | `OrderService.completeOrder()` 判空            |
+| 库存不足不阻断（扣到 0、标记缺料、通知） | `InventoryService.deductFifo()` 返回缺料列表   |
+| 低库存阈值每食材独立                     | `Ingredient.lowStockThreshold` 字段 + 查询     |
+| 菜谱公开开关                             | 查询菜谱时 `where isPublic`                    |
+| 订单可拒、撤单状态流转                   | `OrderService` 状态机校验函数                  |
+| 订单明细快照                             | 创建订单时写入 `OrderItem.dishSnapshot`        |
+| 单位一致性提示                           | 菜谱用料录入时前端校验 + 后端校验              |
 
 **纯函数优先**：`calcConsume` 这类无副作用的计算逻辑，写成纯函数放 shared 或 service，配单测。
 
@@ -392,6 +401,7 @@ scope: kitchen | membership | order | inventory | recipe | dish | ingredient | n
 ```
 
 示例：
+
 - `feat(order): 实现订单完成自动扣库存`
 - `fix(inventory): FIFO 扣减单位不一致`
 - `refactor(shared): 抽取状态机校验为纯函数`
@@ -460,6 +470,7 @@ scope: kitchen | membership | order | inventory | recipe | dish | ingredient | n
 ## 13. 待补充
 
 随着开发推进，以下内容会逐步补充进本规范：
+
 - [ ] 具体 API 路由清单（RESTful 端点表）
 - [ ] Pinia store 结构约定
 - [ ] 组件目录组织与命名细则
@@ -470,13 +481,13 @@ scope: kitchen | membership | order | inventory | recipe | dish | ingredient | n
 
 ## 附：决策记录
 
-| # | 决策 | 理由 |
-|---|---|---|
-| T1 | 全 TypeScript | 前后端共享类型，Prisma 类型贯穿，减少重复定义 |
-| T2 | pnpm workspace monorepo | shared 包被前后端共同引用，monorepo 最自然 |
-| T3 | Prisma | 类型安全 + SQLite/PG 无缝切换，迁移管理好 |
-| T4 | NestJS 分层严格 | 单人长期维护，结构清晰避免腐烂 |
-| T5 | DTO + class-validator | 入参校验集中在 DTO，类型从 shared 复用 |
-| T6 | 统一响应格式 + BizException | 业务层不碰 HTTP，错误码前后端共用 |
-| T7 | 前端 API 封装层 | 组件不直接请求，统一鉴权与错误处理 |
-| T8 | 业务规则纯函数优先 | 可测、可复用、易推理 |
+| #   | 决策                        | 理由                                          |
+| --- | --------------------------- | --------------------------------------------- |
+| T1  | 全 TypeScript               | 前后端共享类型，Prisma 类型贯穿，减少重复定义 |
+| T2  | pnpm workspace monorepo     | shared 包被前后端共同引用，monorepo 最自然    |
+| T3  | Prisma                      | 类型安全 + SQLite/PG 无缝切换，迁移管理好     |
+| T4  | NestJS 分层严格             | 单人长期维护，结构清晰避免腐烂                |
+| T5  | DTO + class-validator       | 入参校验集中在 DTO，类型从 shared 复用        |
+| T6  | 统一响应格式 + BizException | 业务层不碰 HTTP，错误码前后端共用             |
+| T7  | 前端 API 封装层             | 组件不直接请求，统一鉴权与错误处理            |
+| T8  | 业务规则纯函数优先          | 可测、可复用、易推理                          |
